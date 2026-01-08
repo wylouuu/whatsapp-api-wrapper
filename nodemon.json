@@ -1,0 +1,7 @@
+{
+  "watch": ["src", "index.js"],
+  "ext": "js,json",
+  "ignore": ["node_modules", "session-data", "logs", ".wwebjs_auth", ".wwebjs_cache"],
+  "delay": 1000,
+  "verbose": true
+}

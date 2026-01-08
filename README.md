@@ -159,7 +159,11 @@ Complete API documentation is available in [API_DOCUMENTATION.md](./API_DOCUMENT
 
 ### Postman Collection
 
-Import [POSTMAN_COLLECTION.json](./POSTMAN_COLLECTION.json) into Postman for easy testing.
+Import the Postman collection and environment from the `postman/` folder:
+- **Collection**: `postman/WhatsApp-Web-API.postman_collection.json`
+- **Environment**: `postman/WhatsApp-Web-API.postman_environment.json`
+
+See [postman/README.md](./postman/README.md) for detailed setup instructions and automatic variable management features.
 
 ## Chat ID Format
 

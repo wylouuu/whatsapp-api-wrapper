@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const net = require('net');
 
 const sessionRoutes = require('./src/routes/session');
 const messageRoutes = require('./src/routes/message');
@@ -14,7 +15,35 @@ const statusRoutes = require('./src/routes/status');
 const interfaceRoutes = require('./src/routes/interface');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const DEFAULT_PORT = parseInt(process.env.PORT) || 3000;
+
+// Function to check if a port is available
+function isPortAvailable(port) {
+	return new Promise((resolve) => {
+		const server = net.createServer();
+		server.listen(port, () => {
+			server.once('close', () => resolve(true));
+			server.close();
+		});
+		server.on('error', () => resolve(false));
+	});
+}
+
+// Function to find the next available port
+async function findAvailablePort(startPort) {
+	let port = startPort;
+	const maxPort = startPort + 100; // Try up to 100 ports ahead
+	
+	while (port <= maxPort) {
+		const available = await isPortAvailable(port);
+		if (available) {
+			return port;
+		}
+		port++;
+	}
+	
+	throw new Error(`No available port found starting from ${startPort}`);
+}
 
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
@@ -73,8 +102,13 @@ app.use((err, req, res, next) => {
 	});
 });
 
-const server = app.listen(PORT, () => {
-	console.log(`
+// Start server on available port
+(async () => {
+	try {
+		const PORT = await findAvailablePort(DEFAULT_PORT);
+		
+		const server = app.listen(PORT, () => {
+			console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
 ║     WhatsApp Web API Server                                   ║
@@ -95,15 +129,20 @@ const server = app.listen(PORT, () => {
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
     `);
-});
+		});
 
-process.on('SIGINT', async () => {
-	console.log('\nShutting down gracefully...');
-	server.close(() => {
-		console.log('Server closed');
-		process.exit(0);
-	});
-});
+		process.on('SIGINT', async () => {
+			console.log('\nShutting down gracefully...');
+			server.close(() => {
+				console.log('Server closed');
+				process.exit(0);
+			});
+		});
+	} catch (error) {
+		console.error('Failed to start server:', error);
+		process.exit(1);
+	}
+})();
 
 process.on('unhandledRejection', (reason, promise) => {
 	console.error('Unhandled Rejection at:', promise, 'reason:', reason);

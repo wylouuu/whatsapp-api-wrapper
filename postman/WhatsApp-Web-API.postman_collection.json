@@ -1,0 +1,2130 @@
+{
+	"info": {
+		"name": "WhatsApp Web API Wrapper",
+		"description": "Complete API collection for WhatsApp Web automation with automatic variable management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_postman_id": "whatsapp-web-api-wrapper",
+		"version": "2.0.0"
+	},
+	"auth": {
+		"type": "noauth"
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-generate sessionId if not set",
+					"if (!pm.environment.get('sessionId') || pm.environment.get('sessionId') === '') {",
+					"    const timestamp = Date.now();",
+					"    pm.environment.set('sessionId', `session_${timestamp}`);",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract values from responses",
+					"try {",
+					"    const jsonData = pm.response.json();",
+					"    ",
+					"    // Extract sessionId from start session response",
+					"    if (jsonData.success && jsonData.sessionId) {",
+					"        pm.environment.set('sessionId', jsonData.sessionId);",
+					"    }",
+					"    ",
+					"    // Extract messageId from send message response",
+					"    if (jsonData.messageId) {",
+					"        pm.environment.set('lastMessageId', jsonData.messageId);",
+					"    }",
+					"    ",
+					"    // Extract groupId from create group response",
+					"    if (jsonData.groupId) {",
+					"        pm.environment.set('groupId', jsonData.groupId);",
+					"    }",
+					"    ",
+					"    // Extract chatId from list chats (first chat)",
+					"    if (jsonData.chats && jsonData.chats.length > 0 && !pm.environment.get('chatId')) {",
+					"        pm.environment.set('chatId', jsonData.chats[0].id._serialized);",
+					"    }",
+					"    ",
+					"    // Extract contactId from list contacts (first contact)",
+					"    if (jsonData.contacts && jsonData.contacts.length > 0 && !pm.environment.get('contactId')) {",
+					"        pm.environment.set('contactId', jsonData.contacts[0].id._serialized);",
+					"    }",
+					"    ",
+					"    // Extract inviteCode from group invite code response",
+					"    if (jsonData.inviteCode) {",
+					"        pm.environment.set('inviteCode', jsonData.inviteCode);",
+					"    }",
+					"} catch (e) {",
+					"    // Not JSON response, ignore",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "{{baseUrl}}",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Session Management",
+			"item": [
+				{
+					"name": "Start Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"const jsonData = pm.response.json();",
+									"if (jsonData.success) {",
+									"    pm.environment.set('sessionId', pm.request.body.raw ? JSON.parse(pm.request.body.raw).sessionId : pm.environment.get('sessionId'));",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"options\": {}\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/session/start",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "start"]
+						},
+						"description": "Create a new WhatsApp session. The sessionId will be automatically saved to environment."
+					}
+				},
+				{
+					"name": "Get QR Code (JSON)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/session/qr/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "qr", "{{sessionId}}"]
+						},
+						"description": "Get QR code data as JSON. Use this to display QR code in your application."
+					}
+				},
+				{
+					"name": "Get QR Code Image",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/session/qr/{{sessionId}}/image",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "qr", "{{sessionId}}", "image"]
+						},
+						"description": "Get QR code as PNG image. Can be displayed directly in browser or saved."
+					}
+				},
+				{
+					"name": "Check Session Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/session/status/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "status", "{{sessionId}}"]
+						},
+						"description": "Check the current status of a session (initializing, qr, authenticated, ready, etc.)"
+					}
+				},
+				{
+					"name": "Get Session State",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/session/state/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "state", "{{sessionId}}"]
+						},
+						"description": "Get detailed state information of the session"
+					}
+				},
+				{
+					"name": "Get Session Info",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/session/info/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "info", "{{sessionId}}"]
+						},
+						"description": "Get detailed information about the WhatsApp session"
+					}
+				},
+				{
+					"name": "List All Sessions",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/session/list",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "list"]
+						},
+						"description": "List all active sessions"
+					}
+				},
+				{
+					"name": "Logout Session",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/session/logout/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "logout", "{{sessionId}}"]
+						},
+						"description": "Logout and clear session data"
+					}
+				},
+				{
+					"name": "Stop Session",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/session/stop/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["session", "stop", "{{sessionId}}"]
+						},
+						"description": "Stop and destroy a session"
+					}
+				}
+			]
+		},
+		{
+			"name": "Messaging",
+			"item": [
+				{
+					"name": "Send Text Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"message\": \"Hello from API!\",\n  \"options\": {}\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/send",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "send"]
+						},
+						"description": "Send a text message. messageId will be automatically saved."
+					}
+				},
+				{
+					"name": "Send Media (File Upload)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "sessionId",
+									"value": "{{sessionId}}",
+									"type": "text"
+								},
+								{
+									"key": "chatId",
+									"value": "{{chatId}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "caption",
+									"value": "Check this out!",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/send-media",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "send-media"]
+						},
+						"description": "Send media file (image, video, document, audio). Select file in the form-data."
+					}
+				},
+				{
+					"name": "Send Media (URL)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"mediaUrl\": \"https://example.com/image.jpg\",\n  \"caption\": \"Image from URL\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/send-media",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "send-media"]
+						},
+						"description": "Send media from URL"
+					}
+				},
+				{
+					"name": "Send Location",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"latitude\": -6.2088,\n  \"longitude\": 106.8456,\n  \"description\": \"Jakarta, Indonesia\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/send-location",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "send-location"]
+						},
+						"description": "Send location message"
+					}
+				},
+				{
+					"name": "Send Contact",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"contactId\": \"628123456789@c.us\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/send-contact",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "send-contact"]
+						},
+						"description": "Send contact card"
+					}
+				},
+				{
+					"name": "Send Poll",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"pollName\": \"What's your favorite color?\",\n  \"pollOptions\": [\"Red\", \"Blue\", \"Green\", \"Yellow\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/send-poll",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "send-poll"]
+						},
+						"description": "Send poll message"
+					}
+				},
+				{
+					"name": "Broadcast Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatIds\": [\"{{chatId}}\"],\n  \"message\": \"Broadcast message\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/broadcast",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "broadcast"]
+						},
+						"description": "Send message to multiple chats"
+					}
+				},
+				{
+					"name": "Broadcast Media",
+					"request": {
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "sessionId",
+									"value": "{{sessionId}}",
+									"type": "text"
+								},
+								{
+									"key": "chatIds",
+									"value": "[\"{{chatId}}\"]",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "caption",
+									"value": "Broadcast media",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/broadcast-media",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "broadcast-media"]
+						},
+						"description": "Send media to multiple chats"
+					}
+				},
+				{
+					"name": "Reply to Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"messageId\": \"{{lastMessageId}}\",\n  \"message\": \"This is a reply\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/reply",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "reply"]
+						},
+						"description": "Reply to a specific message"
+					}
+				},
+				{
+					"name": "Forward Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/forward",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "forward"]
+						},
+						"description": "Forward a message"
+					}
+				},
+				{
+					"name": "React to Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\",\n  \"reaction\": \"👍\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/react",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "react"]
+						},
+						"description": "React to a message with emoji"
+					}
+				},
+				{
+					"name": "Edit Message",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.messageId) {",
+									"    pm.environment.set('lastMessageId', jsonData.messageId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\",\n  \"newMessage\": \"Edited message\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/edit",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "edit"]
+						},
+						"description": "Edit a sent message"
+					}
+				},
+				{
+					"name": "Delete Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/delete",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "delete"]
+						},
+						"description": "Delete a message"
+					}
+				},
+				{
+					"name": "Star Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/star",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "star"]
+						},
+						"description": "Star a message"
+					}
+				},
+				{
+					"name": "Unstar Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/unstar",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "unstar"]
+						},
+						"description": "Unstar a message"
+					}
+				},
+				{
+					"name": "Pin Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/pin",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "pin"]
+						},
+						"description": "Pin a message"
+					}
+				},
+				{
+					"name": "Unpin Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/unpin",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "unpin"]
+						},
+						"description": "Unpin a message"
+					}
+				},
+				{
+					"name": "Get Message Info",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/message/info/{{sessionId}}/{{lastMessageId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "info", "{{sessionId}}", "{{lastMessageId}}"]
+						},
+						"description": "Get detailed information about a message"
+					}
+				},
+				{
+					"name": "Get Message Reactions",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/message/reactions/{{sessionId}}/{{lastMessageId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "reactions", "{{sessionId}}", "{{lastMessageId}}"]
+						},
+						"description": "Get all reactions for a message"
+					}
+				},
+				{
+					"name": "Download Media",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/download-media",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "download-media"]
+						},
+						"description": "Download media from a message"
+					}
+				},
+				{
+					"name": "Mark Chat as Seen",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/mark-seen",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "mark-seen"]
+						},
+						"description": "Mark all messages in a chat as seen"
+					}
+				},
+				{
+					"name": "Set Typing Indicator",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"duration\": 5000\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/typing",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "typing"]
+						},
+						"description": "Show typing indicator"
+					}
+				},
+				{
+					"name": "Set Recording Indicator",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/recording",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "recording"]
+						},
+						"description": "Show recording indicator"
+					}
+				},
+				{
+					"name": "Clear Chat State",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/message/clear-state",
+							"host": ["{{baseUrl}}"],
+							"path": ["message", "clear-state"]
+						},
+						"description": "Clear typing/recording indicators"
+					}
+				}
+			]
+		},
+		{
+			"name": "Contacts",
+			"item": [
+				{
+					"name": "Get All Contacts",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.contacts && jsonData.contacts.length > 0 && !pm.environment.get('contactId')) {",
+									"    pm.environment.set('contactId', jsonData.contacts[0].id._serialized);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/list/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "list", "{{sessionId}}"]
+						},
+						"description": "Get all contacts. First contact ID will be auto-saved."
+					}
+				},
+				{
+					"name": "Get Contact by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/get/{{sessionId}}/{{contactId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "get", "{{sessionId}}", "{{contactId}}"]
+						},
+						"description": "Get contact details by ID"
+					}
+				},
+				{
+					"name": "Get Profile Picture",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/profile-pic/{{sessionId}}/{{contactId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "profile-pic", "{{sessionId}}", "{{contactId}}"]
+						},
+						"description": "Get contact profile picture URL"
+					}
+				},
+				{
+					"name": "Get Contact About",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/about/{{sessionId}}/{{contactId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "about", "{{sessionId}}", "{{contactId}}"]
+						},
+						"description": "Get contact 'about' status"
+					}
+				},
+				{
+					"name": "Get Common Groups",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/common-groups/{{sessionId}}/{{contactId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "common-groups", "{{sessionId}}", "{{contactId}}"]
+						},
+						"description": "Get groups in common with contact"
+					}
+				},
+				{
+					"name": "Block Contact",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"contactId\": \"{{contactId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/contact/block",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "block"]
+						},
+						"description": "Block a contact"
+					}
+				},
+				{
+					"name": "Unblock Contact",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"contactId\": \"{{contactId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/contact/unblock",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "unblock"]
+						},
+						"description": "Unblock a contact"
+					}
+				},
+				{
+					"name": "Get Formatted Number",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/formatted-number/{{sessionId}}/{{contactId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "formatted-number", "{{sessionId}}", "{{contactId}}"]
+						},
+						"description": "Get formatted phone number"
+					}
+				},
+				{
+					"name": "Get Country Code",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/country-code/{{sessionId}}/{{contactId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "country-code", "{{sessionId}}", "{{contactId}}"]
+						},
+						"description": "Get country code for contact"
+					}
+				},
+				{
+					"name": "Check Number Exists",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/contact/number-exists/{{sessionId}}/628123456789",
+							"host": ["{{baseUrl}}"],
+							"path": ["contact", "number-exists", "{{sessionId}}", "628123456789"]
+						},
+						"description": "Check if a phone number exists on WhatsApp"
+					}
+				}
+			]
+		},
+		{
+			"name": "Chats",
+			"item": [
+				{
+					"name": "Get All Chats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.chats && jsonData.chats.length > 0 && !pm.environment.get('chatId')) {",
+									"    pm.environment.set('chatId', jsonData.chats[0].id._serialized);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/chat/list/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "list", "{{sessionId}}"]
+						},
+						"description": "Get all chats. First chat ID will be auto-saved."
+					}
+				},
+				{
+					"name": "Get Chat Details",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/chat/get/{{sessionId}}/{{chatId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "get", "{{sessionId}}", "{{chatId}}"]
+						},
+						"description": "Get detailed information about a chat"
+					}
+				},
+				{
+					"name": "Get Chat Messages",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/chat/messages/{{sessionId}}/{{chatId}}?limit=50",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "messages", "{{sessionId}}", "{{chatId}}"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "Get messages from a chat"
+					}
+				},
+				{
+					"name": "Archive Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/archive",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "archive"]
+						},
+						"description": "Archive a chat"
+					}
+				},
+				{
+					"name": "Unarchive Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/unarchive",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "unarchive"]
+						},
+						"description": "Unarchive a chat"
+					}
+				},
+				{
+					"name": "Pin Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/pin",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "pin"]
+						},
+						"description": "Pin a chat"
+					}
+				},
+				{
+					"name": "Unpin Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/unpin",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "unpin"]
+						},
+						"description": "Unpin a chat"
+					}
+				},
+				{
+					"name": "Mute Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"unmuteDate\": 1734567890\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/mute",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "mute"]
+						},
+						"description": "Mute a chat (unmuteDate is Unix timestamp)"
+					}
+				},
+				{
+					"name": "Unmute Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/unmute",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "unmute"]
+						},
+						"description": "Unmute a chat"
+					}
+				},
+				{
+					"name": "Mark Chat as Unread",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/mark-unread",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "mark-unread"]
+						},
+						"description": "Mark a chat as unread"
+					}
+				},
+				{
+					"name": "Clear Chat Messages",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/clear-messages",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "clear-messages"]
+						},
+						"description": "Clear all messages from a chat"
+					}
+				},
+				{
+					"name": "Delete Chat",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/delete",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "delete"]
+						},
+						"description": "Delete a chat"
+					}
+				},
+				{
+					"name": "Get Pinned Messages",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/chat/pinned-messages/{{sessionId}}/{{chatId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "pinned-messages", "{{sessionId}}", "{{chatId}}"]
+						},
+						"description": "Get pinned messages from a chat"
+					}
+				},
+				{
+					"name": "Get Chat Labels",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/chat/labels/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "labels", "{{sessionId}}"]
+						},
+						"description": "Get all available chat labels"
+					}
+				},
+				{
+					"name": "Get Chat Labels for Chat",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/chat/chat-labels/{{sessionId}}/{{chatId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "chat-labels", "{{sessionId}}", "{{chatId}}"]
+						},
+						"description": "Get labels for a specific chat"
+					}
+				},
+				{
+					"name": "Change Chat Labels",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"labelIds\": [\"1\", \"2\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/chat/change-labels",
+							"host": ["{{baseUrl}}"],
+							"path": ["chat", "change-labels"]
+						},
+						"description": "Change labels for a chat"
+					}
+				}
+			]
+		},
+		{
+			"name": "Groups",
+			"item": [
+				{
+					"name": "Create Group",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.groupId) {",
+									"    pm.environment.set('groupId', jsonData.groupId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"name\": \"My New Group\",\n  \"participants\": [\"{{contactId}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/create",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "create"]
+						},
+						"description": "Create a new group. groupId will be auto-saved."
+					}
+				},
+				{
+					"name": "Get Group Info",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/group/info/{{sessionId}}/{{groupId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "info", "{{sessionId}}", "{{groupId}}"]
+						},
+						"description": "Get detailed information about a group"
+					}
+				},
+				{
+					"name": "Add Participants",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"participants\": [\"{{contactId}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/add-participants",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "add-participants"]
+						},
+						"description": "Add participants to a group"
+					}
+				},
+				{
+					"name": "Remove Participants",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"participants\": [\"{{contactId}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/remove-participants",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "remove-participants"]
+						},
+						"description": "Remove participants from a group"
+					}
+				},
+				{
+					"name": "Promote Participants",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"participants\": [\"{{contactId}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/promote-participants",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "promote-participants"]
+						},
+						"description": "Promote participants to admin"
+					}
+				},
+				{
+					"name": "Demote Participants",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"participants\": [\"{{contactId}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/demote-participants",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "demote-participants"]
+						},
+						"description": "Demote admins to participants"
+					}
+				},
+				{
+					"name": "Set Group Subject",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"subject\": \"New Group Name\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/set-subject",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "set-subject"]
+						},
+						"description": "Change group name"
+					}
+				},
+				{
+					"name": "Set Group Description",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"description\": \"Group description\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/set-description",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "set-description"]
+						},
+						"description": "Set group description"
+					}
+				},
+				{
+					"name": "Set Group Picture",
+					"request": {
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "sessionId",
+									"value": "{{sessionId}}",
+									"type": "text"
+								},
+								{
+									"key": "groupId",
+									"value": "{{groupId}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/set-picture",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "set-picture"]
+						},
+						"description": "Set group profile picture"
+					}
+				},
+				{
+					"name": "Delete Group Picture",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/delete-picture",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "delete-picture"]
+						},
+						"description": "Delete group profile picture"
+					}
+				},
+				{
+					"name": "Get Invite Code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.inviteCode) {",
+									"    pm.environment.set('inviteCode', jsonData.inviteCode);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/group/invite-code/{{sessionId}}/{{groupId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "invite-code", "{{sessionId}}", "{{groupId}}"]
+						},
+						"description": "Get group invite code. Code will be auto-saved."
+					}
+				},
+				{
+					"name": "Revoke Invite Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/revoke-invite",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "revoke-invite"]
+						},
+						"description": "Revoke current invite code"
+					}
+				},
+				{
+					"name": "Join Group by Code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"const jsonData = pm.response.json();",
+									"if (jsonData.groupId) {",
+									"    pm.environment.set('groupId', jsonData.groupId);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"inviteCode\": \"{{inviteCode}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/join-by-code",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "join-by-code"]
+						},
+						"description": "Join a group using invite code"
+					}
+				},
+				{
+					"name": "Leave Group",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/leave",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "leave"]
+						},
+						"description": "Leave a group"
+					}
+				},
+				{
+					"name": "Set Messages Admins Only",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"adminsOnly\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/set-messages-admins-only",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "set-messages-admins-only"]
+						},
+						"description": "Set group to admins-only messaging"
+					}
+				},
+				{
+					"name": "Set Info Admins Only",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"adminsOnly\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/set-info-admins-only",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "set-info-admins-only"]
+						},
+						"description": "Set group info changes to admins-only"
+					}
+				},
+				{
+					"name": "Set Add Members Admins Only",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"adminsOnly\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/set-add-members-admins-only",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "set-add-members-admins-only"]
+						},
+						"description": "Set adding members to admins-only"
+					}
+				},
+				{
+					"name": "Get Membership Requests",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/group/membership-requests/{{sessionId}}/{{groupId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "membership-requests", "{{sessionId}}", "{{groupId}}"]
+						},
+						"description": "Get pending membership requests"
+					}
+				},
+				{
+					"name": "Approve Membership Requests",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"participantIds\": [\"{{contactId}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/approve-membership-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "approve-membership-requests"]
+						},
+						"description": "Approve membership requests"
+					}
+				},
+				{
+					"name": "Reject Membership Requests",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"groupId\": \"{{groupId}}\",\n  \"participantIds\": [\"{{contactId}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/group/reject-membership-requests",
+							"host": ["{{baseUrl}}"],
+							"path": ["group", "reject-membership-requests"]
+						},
+						"description": "Reject membership requests"
+					}
+				}
+			]
+		},
+		{
+			"name": "Status",
+			"item": [
+				{
+					"name": "Set Status Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"status\": \"Available\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/status/set",
+							"host": ["{{baseUrl}}"],
+							"path": ["status", "set"]
+						},
+						"description": "Set status message (about)"
+					}
+				},
+				{
+					"name": "Post Text Status",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"text\": \"This is my status update!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/status/text",
+							"host": ["{{baseUrl}}"],
+							"path": ["status", "text"]
+						},
+						"description": "Post text to status"
+					}
+				},
+				{
+					"name": "Post Media Status",
+					"request": {
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "sessionId",
+									"value": "{{sessionId}}",
+									"type": "text"
+								},
+								{
+									"key": "file",
+									"type": "file",
+									"src": ""
+								},
+								{
+									"key": "caption",
+									"value": "Status update",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/status/media",
+							"host": ["{{baseUrl}}"],
+							"path": ["status", "media"]
+						},
+						"description": "Post media to status"
+					}
+				}
+			]
+		},
+		{
+			"name": "Interface Controls",
+			"item": [
+				{
+					"name": "Open Chat Window",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/open-chat-window",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "open-chat-window"]
+						},
+						"description": "Open chat window in WhatsApp Web"
+					}
+				},
+				{
+					"name": "Open Chat Window at Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/open-chat-window-at",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "open-chat-window-at"]
+						},
+						"description": "Open chat window at specific message"
+					}
+				},
+				{
+					"name": "Open Chat Drawer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"chatId\": \"{{chatId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/open-chat-drawer",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "open-chat-drawer"]
+						},
+						"description": "Open chat info drawer"
+					}
+				},
+				{
+					"name": "Open Message Drawer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"messageId\": \"{{lastMessageId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/open-message-drawer",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "open-message-drawer"]
+						},
+						"description": "Open message info drawer"
+					}
+				},
+				{
+					"name": "Open Chat Search",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"query\": \"search term\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/open-chat-search",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "open-chat-search"]
+						},
+						"description": "Open chat search"
+					}
+				},
+				{
+					"name": "Close Right Drawer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/close-right-drawer",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "close-right-drawer"]
+						},
+						"description": "Close right drawer"
+					}
+				},
+				{
+					"name": "Get Features",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/interface/features/{{sessionId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "features", "{{sessionId}}"]
+						},
+						"description": "Get available interface features"
+					}
+				},
+				{
+					"name": "Enable Features",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"features\": [\"MESSAGES_HISTORY\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/enable-features",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "enable-features"]
+						},
+						"description": "Enable interface features"
+					}
+				},
+				{
+					"name": "Disable Features",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"features\": [\"MESSAGES_HISTORY\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/disable-features",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "disable-features"]
+						},
+						"description": "Disable interface features"
+					}
+				},
+				{
+					"name": "Check Feature Status",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"features\": [\"MESSAGES_HISTORY\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/interface/check-feature-status",
+							"host": ["{{baseUrl}}"],
+							"path": ["interface", "check-feature-status"]
+						},
+						"description": "Check status of interface features"
+					}
+				}
+			]
+		}
+	]
+}
+

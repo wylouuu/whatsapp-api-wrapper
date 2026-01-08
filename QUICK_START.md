@@ -154,12 +154,14 @@ curl http://localhost:3000/api/contact/number-exists/mySession/628123456789
 
 ## Testing with Postman
 
-1. Import `POSTMAN_COLLECTION.json` into Postman
-2. Update the variables:
-   - `baseUrl`: `http://localhost:3000/api`
-   - `sessionId`: Your session name
-   - `chatId`: Your WhatsApp number
-3. Start testing!
+1. Import both files from `postman/` folder:
+   - `WhatsApp-Web-API.postman_collection.json`
+   - `WhatsApp-Web-API.postman_environment.json`
+2. Select the environment "WhatsApp Web API Environment"
+3. Update `baseUrl` if needed (default: `http://localhost:3000/api`)
+4. Start testing! Variables are automatically managed - no copy-paste needed!
+
+See [postman/README.md](./postman/README.md) for detailed instructions.
 
 ---
 

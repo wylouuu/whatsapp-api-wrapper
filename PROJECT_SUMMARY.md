@@ -24,7 +24,10 @@ whatsapp-api/
 │   ├── QUICK_START.md            # Quick start guide with examples
 │   ├── ENDPOINTS.md              # Endpoint reference table
 │   ├── FEATURES.md               # Complete feature list
-│   ├── POSTMAN_COLLECTION.json   # Postman collection for testing
+│   ├── postman/                  # Postman collection and environment
+│   │   ├── WhatsApp-Web-API.postman_collection.json
+│   │   ├── WhatsApp-Web-API.postman_environment.json
+│   │   └── README.md
 │   └── PROJECT_SUMMARY.md        # This file
 │
 ├── 🔧 Application Files
@@ -158,7 +161,7 @@ curl -X POST http://localhost:3000/api/session/start \
 | **QUICK_START.md**          | Quick guide with code examples (Node/Python/PHP) | ~300 lines   |
 | **ENDPOINTS.md**            | Endpoint reference table                         | ~150 lines   |
 | **FEATURES.md**             | Complete feature list with comparisons           | ~400 lines   |
-| **POSTMAN_COLLECTION.json** | Ready-to-import Postman collection               | ~200 lines   |
+| **postman/**                 | Postman collection + environment + scripts       | Collection + Env |
 
 **Total Documentation**: ~3,000 lines
 
@@ -317,8 +320,9 @@ node test-api.js
 
 ### Manual Test with Postman
 
-1. Import `POSTMAN_COLLECTION.json`
-2. Set variables (baseUrl, sessionId, chatId)
+1. Import collection and environment from `postman/` folder
+2. Select environment and update `baseUrl` if needed
+3. Variables are automatically managed - see `postman/README.md`
 3. Start testing!
 
 ---
